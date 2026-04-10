@@ -1,14 +1,19 @@
-import React from 'react'
-import { Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import './Teacher.css'
-import TeacherHome from './TeacherHome'
-import TeacherProfile from './TeacherProfile'
-import PageNotFound from '../pages/PageNotFound'
 import { useAuth } from '../context/AuthContext'
+import { teacherService } from '../api/teacherService'
 
 const TeacherNavBar = () => {
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const location = useLocation()
+  const { logout, currentUser } = useAuth()
+
+  useEffect(() => {
+    if (currentUser) {
+      teacherService.trackPortalVisit(currentUser, location.pathname)
+    }
+  }, [currentUser, location.pathname])
 
   const handleLogout = () => {
     logout()
@@ -22,16 +27,13 @@ const TeacherNavBar = () => {
         <ul className="teacher-nav-links">
           <li><Link to="/teacher/home">Home</Link></li>
           <li><Link to="/teacher/profile">Profile</Link></li>
+          <li><Link to="/teacher/viewsubjects">Subjects</Link></li>
+          <li><Link to="/teacher/addsubject">Add Subject</Link></li>
           <li><button type="button" onClick={handleLogout}>Logout</button></li>
         </ul>
       </nav>
       <main className="teacher-page-wrap">
-        <Routes>
-          <Route path="/" element={<Navigate to="/teacher/home" replace />} />
-          <Route path="/teacher/home" element={<TeacherHome />} />
-          <Route path="/teacher/profile" element={<TeacherProfile />} />
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   )

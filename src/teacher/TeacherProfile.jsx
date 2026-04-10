@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import axios from 'axios'
 import './Teacher.css'
+import { useAuth } from '../context/AuthContext'
+import { teacherService } from '../api/teacherService'
 
 const TeacherProfile = () => {
-  const teacher = JSON.parse(sessionStorage.getItem('loggedInTeacher'))
+  const { currentUser, updateCurrentUser } = useAuth()
+  const teacher = currentUser
 
   const [formData, setFormData] = useState({
     id: teacher?.id || '',
@@ -14,6 +16,7 @@ const TeacherProfile = () => {
   })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -21,16 +24,31 @@ const TeacherProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitting(true)
+
     try {
-      const response = await axios.post('http://localhost:2028/teacherapi/updateprofile', formData)
-      setMessage(response.data)
+      const updatedTeacher = await teacherService.updateProfile({
+        id: teacher.id,
+        contact: formData.contact,
+        designation: formData.designation,
+        department: formData.department,
+        password: formData.password,
+      })
+      setMessage('Profile updated successfully.')
       setError('')
-      sessionStorage.setItem('loggedInTeacher', JSON.stringify({ ...teacher, ...formData }))
-    } catch (err) {
+      updateCurrentUser(updatedTeacher)
+      setFormData((currentData) => ({
+        ...currentData,
+        password: '',
+        contact: updatedTeacher.contact ?? currentData.contact,
+        designation: updatedTeacher.designation ?? currentData.designation,
+        department: updatedTeacher.department ?? currentData.department,
+      }))
+    } catch (serviceError) {
       setMessage('')
-      if (err.response?.status === 500) setError('Internal Server Error')
-      else if (err.request) setError('Network Error - Server not responding')
-      else setError('Bad Request')
+      setError(serviceError.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -105,7 +123,9 @@ const TeacherProfile = () => {
               <label className="teacher-form-label">New Password</label>
               <input type="password" name="password" placeholder="Enter new password" value={formData.password} onChange={handleChange} required maxLength={50} />
             </div>
-            <button type="submit" className="teacher-primary-btn">Update Profile</button>
+            <button type="submit" className="teacher-primary-btn" disabled={submitting}>
+              {submitting ? 'Updating...' : 'Update Profile'}
+            </button>
           </div>
         </form>
         {message && <div className="teacher-success">{message}</div>}

@@ -1,18 +1,21 @@
 import React, { useState } from 'react'
-import axios from 'axios'
 import './Student.css'
+import { useAuth } from '../context/AuthContext'
+import { studentService } from '../api/studentService'
 
 const StudentProfile = () => {
-  const student = JSON.parse(sessionStorage.getItem('loggedInStudent'))
+  const { currentUser, updateCurrentUser } = useAuth()
+  const student = currentUser
 
   const [formData, setFormData] = useState({
     id: student?.id || '',
     contact: student?.contact || '',
-    bloodgroup: student?.bloodgroup || '',
-    password: ''
+    bloodgroup: student?.bloodGroup || student?.bloodgroup || '',
+    password: '',
   })
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -20,16 +23,29 @@ const StudentProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitting(true)
+
     try {
-      const response = await axios.post('http://localhost:2028/studentapi/updateprofile', formData)
-      setMessage(response.data)
+      const updatedStudent = await studentService.updateProfile({
+        id: student.id,
+        contact: formData.contact,
+        bloodGroup: formData.bloodgroup,
+        password: formData.password,
+      })
+      setMessage('Profile updated successfully.')
       setError('')
-      sessionStorage.setItem('loggedInStudent', JSON.stringify({ ...student, ...formData }))
-    } catch (err) {
+      updateCurrentUser(updatedStudent)
+      setFormData((currentData) => ({
+        ...currentData,
+        password: '',
+        contact: updatedStudent.contact ?? currentData.contact,
+        bloodgroup: updatedStudent.bloodGroup ?? currentData.bloodgroup,
+      }))
+    } catch (serviceError) {
       setMessage('')
-      if (err.response?.status === 500) setError('Internal Server Error')
-      else if (err.request) setError('Network Error - Server not responding')
-      else setError('Bad Request')
+      setError(serviceError.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -67,7 +83,7 @@ const StudentProfile = () => {
           </div>
           <div className="student-info-item">
             <span className="student-info-label">Blood Group</span>
-            <span className="student-info-value">{student?.bloodgroup || '-'}</span>
+            <span className="student-info-value">{student?.bloodGroup || student?.bloodgroup || '-'}</span>
           </div>
         </div>
       </div>
@@ -91,7 +107,9 @@ const StudentProfile = () => {
               <label className="student-form-label">New Password</label>
               <input type="password" name="password" placeholder="Enter new password" value={formData.password} onChange={handleChange} required maxLength={50} />
             </div>
-            <button type="submit" className="student-primary-btn">Update Profile</button>
+            <button type="submit" className="student-primary-btn" disabled={submitting}>
+              {submitting ? 'Updating...' : 'Update Profile'}
+            </button>
           </div>
         </form>
         {message && <div className="student-success">{message}</div>}

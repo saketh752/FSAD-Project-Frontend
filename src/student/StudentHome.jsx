@@ -1,15 +1,16 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import './Student.css'
+import { useAuth } from '../context/AuthContext'
 
 const StudentHome = () => {
-  const student = JSON.parse(sessionStorage.getItem('loggedInStudent'))
+  const { currentUser } = useAuth()
 
   return (
     <div>
       <div className="student-welcome-card">
         <div>
-          <h2>Welcome back, {student?.name || 'Student'}</h2>
+          <h2>Welcome back, {currentUser?.name || 'Student'}</h2>
           <p>Manage your profile and track your project submissions</p>
         </div>
         <span className="student-welcome-badge">Student</span>

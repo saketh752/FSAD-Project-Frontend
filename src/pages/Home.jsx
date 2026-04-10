@@ -1,11 +1,12 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import './Style.css'
 
 const Home = () => {
   return (
     <div className="home-page">
       <div className="home-hero">
-        <h1 className="home-title">Group Project  Submissions Portal</h1>
+        <h1 className="home-title">Group Project Submissions Portal</h1>
         <p className="home-subtitle">A centralized platform to manage, submit and review academic group projects</p>
       </div>
 
@@ -21,6 +22,9 @@ const Home = () => {
               <li>View Dashboard</li>
               <li>Monitor Portal</li>
             </ul>
+            <div className="role-card-actions">
+              <Link to="/adminlogin" className="role-card-link role-card-link-admin">Admin Login</Link>
+            </div>
           </div>
 
           <div className="role-card role-card-student">
@@ -32,6 +36,9 @@ const Home = () => {
               <li>Track Submissions</li>
               <li>View Feedback</li>
             </ul>
+            <div className="role-card-actions">
+              <Link to="/studentlogin" className="role-card-link role-card-link-student">Student Access</Link>
+            </div>
           </div>
 
           <div className="role-card role-card-teacher">
@@ -43,6 +50,9 @@ const Home = () => {
               <li>Review Submissions</li>
               <li>Grade Students</li>
             </ul>
+            <div className="role-card-actions">
+              <Link to="/teacherlogin" className="role-card-link role-card-link-teacher">Teacher Access</Link>
+            </div>
           </div>
         </div>
       </div>
