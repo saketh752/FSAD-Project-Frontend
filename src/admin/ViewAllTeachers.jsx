@@ -8,22 +8,43 @@ const ViewAllTeachers = () => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
 
   const fetchTeachers = async () => {
     setLoading(true)
 
     try {
       const data = await adminService.getTeachers()
-      setTeachers(data)
+      setTeachers(Array.isArray(data) ? data : [])
       setError('')
     } catch (serviceError) {
       setError(serviceError.message)
+      setTeachers([])
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { fetchTeachers() }, [])
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      const data = await adminService.getTeachers()
+      setTeachers(Array.isArray(data) ? data : [])
+      setMessage('Data refreshed successfully')
+      setTimeout(() => setMessage(''), 2000)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  useEffect(() => { 
+    fetchTeachers()
+    // Auto-refresh every 5 seconds
+    const interval = setInterval(fetchTeachers, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredTeachers = useMemo(() => (
     teachers.filter((teacher) => {
@@ -80,8 +101,31 @@ const ViewAllTeachers = () => {
   return (
     <div className="admin-section-card">
       <div className="admin-section-header">
-        <h2>All Teachers</h2>
-        <p>View and manage all registered teachers</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2>All Teachers</h2>
+            <p>View and manage all registered teachers</p>
+          </div>
+          <button 
+            className="admin-refresh-btn"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            style={{
+              padding: '8px 16px',
+              background: '#3b82f6',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              opacity: refreshing ? 0.6 : 1,
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            {refreshing ? '🔄 Refreshing...' : '🔄 Refresh Now'}
+          </button>
+        </div>
       </div>
       <div className="admin-search-row">
         <input

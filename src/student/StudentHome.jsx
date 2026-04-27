@@ -1,10 +1,88 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 import './Student.css'
 import { useAuth } from '../context/AuthContext'
 
 const StudentHome = () => {
   const { currentUser } = useAuth()
+  const [dashboardStats, setDashboardStats] = useState({
+    totalProjects: 0,
+    activeProjects: 0,
+  })
+  const [loadingStats, setLoadingStats] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const isActiveProject = (project) => {
+      if (!project?.deadline) {
+        return true
+      }
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const deadline = new Date(project.deadline)
+      deadline.setHours(0, 0, 0, 0)
+
+      return !Number.isNaN(deadline.getTime()) && deadline >= today
+    }
+
+    const fetchDashboardStats = async () => {
+      if (!currentUser?.department) {
+        if (isMounted) {
+          setDashboardStats({ totalProjects: 0, activeProjects: 0 })
+          setLoadingStats(false)
+        }
+        return
+      }
+
+      try {
+        const subjectsRes = await axios.get(
+          `http://localhost:8080/api/student/subjects?department=${currentUser.department}`
+        )
+
+        const subjects = Array.isArray(subjectsRes.data) ? subjectsRes.data : []
+
+        const projectResponses = await Promise.all(
+          subjects.map((subject) =>
+            axios.get(`http://localhost:8080/api/teacher/projects?coursecode=${subject.coursecode}`)
+          )
+        )
+
+        const projects = projectResponses.flatMap((response) =>
+          Array.isArray(response.data) ? response.data : []
+        )
+
+        const activeProjects = projects.filter(isActiveProject).length
+
+        if (isMounted) {
+          setDashboardStats({
+            totalProjects: projects.length,
+            activeProjects,
+          })
+        }
+      } catch (error) {
+        console.error('Error loading student dashboard stats:', error)
+        if (isMounted) {
+          setDashboardStats({ totalProjects: 0, activeProjects: 0 })
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingStats(false)
+        }
+      }
+    }
+
+    fetchDashboardStats()
+    const intervalId = setInterval(fetchDashboardStats, 30000)
+
+    return () => {
+      isMounted = false
+      clearInterval(intervalId)
+    }
+  }, [currentUser])
 
   return (
     <div>
@@ -19,23 +97,31 @@ const StudentHome = () => {
       <div className="student-stats-grid">
         <div className="student-stat-card">
           <span className="student-stat-label">Projects Assigned</span>
-          <span className="student-stat-value">0</span>
-          <span className="student-stat-sub">Active projects</span>
+          <span className="student-stat-value">
+            {loadingStats ? '...' : dashboardStats.totalProjects}
+          </span>
+          <span className="student-stat-sub">
+            {loadingStats ? 'Loading projects' : `${dashboardStats.activeProjects} active projects`}
+          </span>
         </div>
         <div className="student-stat-card">
-          <span className="student-stat-label">Submissions</span>
-          <span className="student-stat-value">0</span>
-          <span className="student-stat-sub">Total submitted</span>
+          <span className="student-stat-label">Active Projects</span>
+          <span className="student-stat-value">
+            {loadingStats ? '...' : dashboardStats.activeProjects}
+          </span>
+          <span className="student-stat-sub">Open by deadline</span>
         </div>
         <div className="student-stat-card">
-          <span className="student-stat-label">Approved</span>
-          <span className="student-stat-value">0</span>
-          <span className="student-stat-sub">Approved projects</span>
+          <span className="student-stat-label">Completed</span>
+          <span className="student-stat-value">
+            {loadingStats ? '...' : Math.max(dashboardStats.totalProjects - dashboardStats.activeProjects, 0)}
+          </span>
+          <span className="student-stat-sub">Past deadline</span>
         </div>
         <div className="student-stat-card">
-          <span className="student-stat-label">Pending</span>
+          <span className="student-stat-label">Status</span>
           <span className="student-stat-value">0</span>
-          <span className="student-stat-sub">Pending review</span>
+          <span className="student-stat-sub">Live project sync enabled</span>
         </div>
       </div>
 

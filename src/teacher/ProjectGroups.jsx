@@ -17,6 +17,7 @@ const ProjectGroups = () => {
   const [selectedGroup, setSelectedGroup] = useState(null)
 
   const fetchGroups = async () => {
+    setLoading(true)
     try {
       const res = await axios.get(
         `http://localhost:8080/api/teacher/groups?projectId=${projectId}`
@@ -32,7 +33,9 @@ const ProjectGroups = () => {
     }
   }
 
-  useEffect(() => { fetchGroups() }, [projectId])
+  useEffect(() => {
+    fetchGroups()
+  }, [projectId])
 
   const handleAddGroup = async (e) => {
     e.preventDefault()
@@ -41,9 +44,10 @@ const ProjectGroups = () => {
       return
     }
     try {
+      setError('')
       await axios.post(
         `http://localhost:8080/api/teacher/addgroup?projectId=${projectId}`,
-        { groupName: formData.groupName, maxMembers: parseInt(formData.maxMembers) }
+        { groupName: formData.groupName, maxMembers: parseInt(formData.maxMembers, 10) }
       )
       setMessage('Group created successfully!')
       setFormData({ groupName: '', maxMembers: '5' })
@@ -51,19 +55,28 @@ const ProjectGroups = () => {
       fetchGroups()
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
-      setError('Error creating group')
+      setError(
+        typeof err.response?.data === 'string'
+          ? err.response.data
+          : 'Error creating group'
+      )
     }
   }
 
   const handleDeleteGroup = async (groupId) => {
     if (window.confirm('Are you sure you want to delete this group?')) {
       try {
+        setError('')
         await axios.delete(`http://localhost:8080/api/teacher/deletegroup?groupId=${groupId}`)
         setMessage('Group deleted successfully!')
         fetchGroups()
         setTimeout(() => setMessage(''), 3000)
       } catch (err) {
-        setError('Error deleting group')
+        setError(
+          typeof err.response?.data === 'string'
+            ? err.response.data
+            : 'Error deleting group'
+        )
       }
     }
   }
@@ -84,7 +97,7 @@ const ProjectGroups = () => {
           onClick={() => setFormVisible(!formVisible)}
           style={{ marginBottom: '20px' }}
         >
-          {formVisible ? '✕ Cancel' : '+ Create Group'}
+          {formVisible ? 'Cancel' : '+ Create Group'}
         </button>
 
         {formVisible && (
@@ -132,80 +145,87 @@ const ProjectGroups = () => {
           </div>
         ) : groups.length === 0 ? (
           <div className="teacher-empty-state">
-            <div className="teacher-empty-icon">👥</div>
+            <div className="teacher-empty-icon">Groups</div>
             <p className="teacher-empty-text">No groups created yet. Create one to get started!</p>
           </div>
         ) : (
           <div className="teacher-group-grid">
-            {groups.map((g, index) => (
-              <div key={g.id} className="teacher-group-card">
-                <div className="teacher-group-badge">
-                  <span className="group-badge-text">Group {index + 1}</span>
-                </div>
+            {groups.map((g, index) => {
+              const members = Array.isArray(g.students) ? g.students : []
+              const currentMembers = members.length
 
-                <div className="teacher-group-header">
-                  <h3 className="teacher-group-title">{g.groupName || `Group ${index + 1}`}</h3>
-                </div>
-
-                <div className="teacher-group-stats">
-                  <div className="stat-item">
-                    <span className="stat-icon">👥</span>
-                    <span className="stat-text">{g.currentMembers || 0}/{g.maxMembers || 0}</span>
+              return (
+                <div key={g.id} className="teacher-group-card">
+                  <div className="teacher-group-badge">
+                    <span className="group-badge-text">Group {index + 1}</span>
                   </div>
-                  <div className="stat-item">
-                    <span className="stat-icon">👤</span>
-                    <span className="stat-text">Leader: {g.leader?.name || 'Not Assigned'}</span>
-                  </div>
-                </div>
 
-                <div className="teacher-group-members-preview">
-                  <span className="members-label">Members:</span>
-                  <div className="members-avatars">
-                    {g.members && g.members.slice(0, 3).map((member, i) => (
-                      <div key={i} className="member-avatar" title={member.name}>
-                        {member.name?.charAt(0).toUpperCase()}
-                      </div>
-                    ))}
-                    {g.members && g.members.length > 3 && (
-                      <div className="member-avatar more">+{g.members.length - 3}</div>
-                    )}
+                  <div className="teacher-group-header">
+                    <h3 className="teacher-group-title">{g.groupName || `Group ${index + 1}`}</h3>
                   </div>
-                </div>
 
-                <div className="teacher-group-actions">
-                  <button
-                    className="teacher-group-action-btn view"
-                    onClick={() => setSelectedGroup(selectedGroup === g.id ? null : g.id)}
-                  >
-                    👁️ View Members
-                  </button>
-                  <button
-                    className="teacher-group-action-btn delete"
-                    onClick={() => handleDeleteGroup(g.id)}
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-
-                {selectedGroup === g.id && (
-                  <div className="teacher-group-members-list">
-                    <h4>Group Members</h4>
-                    {g.members && g.members.length > 0 ? (
-                      <ul className="members-list">
-                        {g.members.map((member) => (
-                          <li key={member.id} className="member-item">
-                            <span className="member-name">{member.name}</span>
-                            <span className="member-id">ID: {member.id}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="no-members">No members in this group yet</p>
-                    )}
+                  <div className="teacher-group-stats">
+                    <div className="stat-item">
+                      <span className="stat-icon">Members</span>
+                      <span className="stat-text">{currentMembers}/{g.maxMembers || 0}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-icon">Student Names</span>
+                      <span className="stat-text">
+                        {members.length > 0 ? members.map((member) => member.name).join(', ') : 'No members yet'}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  <div className="teacher-group-members-preview">
+                    <span className="members-label">Members:</span>
+                    <div className="members-avatars">
+                      {members.slice(0, 3).map((member, i) => (
+                        <div key={member.id || i} className="member-avatar" title={member.name}>
+                          {member.name?.charAt(0).toUpperCase()}
+                        </div>
+                      ))}
+                      {members.length > 3 && (
+                        <div className="member-avatar more">+{members.length - 3}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="teacher-group-actions">
+                    <button
+                      className="teacher-group-action-btn view"
+                      onClick={() => setSelectedGroup(selectedGroup === g.id ? null : g.id)}
+                    >
+                      View Members
+                    </button>
+                    <button
+                      className="teacher-group-action-btn delete"
+                      onClick={() => handleDeleteGroup(g.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  {selectedGroup === g.id && (
+                    <div className="teacher-group-members-list">
+                      <h4>Group Members</h4>
+                      {members.length > 0 ? (
+                        <ul className="members-list">
+                          {members.map((member) => (
+                            <li key={member.id} className="member-item">
+                              <span className="member-name">{member.name}</span>
+                              <span className="member-id">ID: {member.id}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="no-members">No members in this group yet</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

@@ -18,8 +18,8 @@ export const adminService = {
         axiosClient.get('/admin/students'),
         axiosClient.get('/admin/teachers'),
       ])
-      const students = studentsResponse.data ?? []
-      const teachers = teachersResponse.data ?? []
+      const students = Array.isArray(studentsResponse.data) ? studentsResponse.data : []
+      const teachers = Array.isArray(teachersResponse.data) ? teachersResponse.data : []
       const monitoring = getMonitoringSummary()
       const blockedAccounts = [...students, ...teachers].filter(
         (account) => account?.status?.toUpperCase() === 'BLOCKED',

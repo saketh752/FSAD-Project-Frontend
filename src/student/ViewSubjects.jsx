@@ -14,14 +14,21 @@ const ViewSubjects = () => {
 
   useEffect(() => {
     const fetchSubjects = async () => {
-      if (!student || !student.department) {
+      if (!student) {
+        setError('Please log in to view subjects')
+        setLoading(false)
+        return
+      }
+
+      if (!student.department) {
+        setError('Unable to load subjects: Department information missing')
         setLoading(false)
         return
       }
 
       try {
         const res = await axios.get(
-          `http://localhost:8080/api/student/subjects?department=${student?.department}`
+          `http://localhost:8080/api/student/subjects?department=${student.department}`
         )
 
         console.log("API Response:", res.data)
@@ -29,15 +36,17 @@ const ViewSubjects = () => {
         setError('')
 
       } catch (err) {
-        console.error(err)
-        setError('Error fetching subjects')
+        console.error('Fetch error:', err)
+        setError(err.response?.data || 'Error fetching subjects')
         setSubjects([])
       } finally {
         setLoading(false)
       }
     }
 
-    if (student?.department) fetchSubjects()
+    if (student?.department) {
+      fetchSubjects()
+    }
   }, [student])
 
   return (

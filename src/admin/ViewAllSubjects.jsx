@@ -34,32 +34,52 @@ const ViewSubjects = () => {
   }, [])
 
   return (
-    <div>
-
-      <h2>All Subjects</h2>
-
-      {error && <p>{error}</p>}
-
-      {loading ? (
-        <p>Loading...</p>
-
-      ) : subjects.length === 0 ? (
-
-        <p>No subjects found</p>
-
-      ) : (
-
-        <div>
-          {(Array.isArray(subjects) ? subjects : []).map((s, index) => (
-            <div key={index}>
-              <h3>{s.coursecode}</h3>
-              <p>{s.subjectname}</p>
-              <p>{s.semester}</p>
-            </div>
-          ))}
+    <div className="admin-page">
+      <div className="admin-section-card">
+        <div className="admin-section-header">
+          <h2>All Subjects</h2>
+          <p>Manage and view all subjects across departments</p>
         </div>
-      )}
 
+        {error && (
+          <div className="admin-error-alert">
+            <span>⚠️ {error}</span>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="admin-loading-container">
+            <div className="admin-spinner"></div>
+            <p>Loading subjects...</p>
+          </div>
+        ) : subjects.length === 0 ? (
+          <div className="admin-empty-state">
+            <div className="empty-icon">📚</div>
+            <h3>No subjects found</h3>
+            <p>No subjects available in the system</p>
+          </div>
+        ) : (
+          <div className="admin-subject-grid">
+            {(Array.isArray(subjects) ? subjects : []).map((s, index) => (
+              <div key={index} className="admin-subject-card" style={{
+                animationDelay: `${index * 0.08}s`
+              }}>
+                <div className="admin-subject-badge">Subject</div>
+                <div className="admin-subject-header">
+                  <h3 className="admin-subject-code">{s.coursecode}</h3>
+                </div>
+                <div className="admin-subject-content">
+                  <p className="admin-subject-name">📝 {s.subjectname}</p>
+                  <p className="admin-subject-semester">📊 Semester: {s.semester}</p>
+                </div>
+                <div className="admin-subject-footer">
+                  <span className="admin-subject-tag">Active</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
