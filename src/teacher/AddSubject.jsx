@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import './Teacher.css'
@@ -35,9 +35,10 @@ const AddSubject = () => {
     setLoading(true)
 
     try {
-      const response = await axios.post(
-        `http://localhost:8080/api/teacher/addsubject?teacherId=${teacher.id}`,
-        formData
+      const response = await axiosClient.post(
+        `/teacher/addsubject`,
+        formData,
+        { params: { teacherId: teacher.id } }
       )
 
       console.log("Response:", response.data)

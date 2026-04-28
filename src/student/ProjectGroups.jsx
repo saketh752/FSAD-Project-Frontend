@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Student.css'
 import { useAuth } from '../context/AuthContext'
 
-const SUBMIT_SUBMISSION_ENDPOINT = 'http://localhost:8080/api/student/submitsubmission'
-const API_BASE_URL = 'http://localhost:8080'
 const MAX_FILE_SIZE = 20 * 1024 * 1024
 const studentInfoPanelStyle = {
   border: '1px solid #e2e8f0',
@@ -34,8 +32,9 @@ const ProjectGroups = () => {
   const fetchGroups = async () => {
     setLoading(true)
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/teacher/groups?projectId=${projectId}`
+      const res = await axiosClient.get(
+        '/teacher/groups',
+        { params: { projectId } }
       )
       setGroups(Array.isArray(res.data) ? res.data : [])
       setError('')
@@ -70,9 +69,9 @@ const ProjectGroups = () => {
 
       try {
         const [submissionResponse, taskResponse, milestoneResponse] = await Promise.all([
-          axios.get(`http://localhost:8080/api/teacher/viewsubmissions?groupId=${activeGroupId}`),
-          axios.get(`http://localhost:8080/api/teacher/viewtasks?groupId=${activeGroupId}`),
-          axios.get(`http://localhost:8080/api/teacher/viewmilestones?groupId=${activeGroupId}`)
+          axiosClient.get('/teacher/viewsubmissions', { params: { groupId: activeGroupId } }),
+          axiosClient.get('/teacher/viewtasks', { params: { groupId: activeGroupId } }),
+          axiosClient.get('/teacher/viewmilestones', { params: { groupId: activeGroupId } })
         ])
         setSubmissionList(Array.isArray(submissionResponse.data) ? submissionResponse.data : [])
         setTaskList(Array.isArray(taskResponse.data) ? taskResponse.data : [])
@@ -88,30 +87,11 @@ const ProjectGroups = () => {
     fetchSubmissions()
   }, [groups, joinedGroupId, student?.id])
 
-  const handleJoinGroup = async (groupId, maxMembers, currentMembers) => {
-    if (!student?.id) {
-      setError('Student session not found')
-      return
-    }
-
-    if (currentMembers >= maxMembers) {
-      setError('This group is full')
-      return
-    }
-
+  const handleJoinGroup = async (groupId) => {
+    setError('')
     try {
-      setError('')
-      await axios.post(
-        'http://localhost:8080/api/student/joingroup',
-        {
-          groupId,
-          studentId: student.id
-        }
-      )
-      setMessage('Successfully joined group!')
-      setJoinedGroupId(groupId)
+      await axiosClient.post('/student/joingroup', { groupId })
       fetchGroups()
-      setTimeout(() => setMessage(''), 3000)
     } catch (err) {
       setError(
         typeof err.response?.data === 'string'
@@ -177,7 +157,7 @@ const ProjectGroups = () => {
       setSubmitting(true)
       setError('')
 
-      await axios.post(SUBMIT_SUBMISSION_ENDPOINT, formData, {
+      await axiosClient.post('/student/submitsubmission', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -400,7 +380,7 @@ const ProjectGroups = () => {
                                 </div>
                                 {(submission.fileUrl || submission.downloadUrl) && (
                                   <a
-                                    href={`${API_BASE_URL}${submission.fileUrl || submission.downloadUrl}`}
+                                    href={`${submission.fileUrl || submission.downloadUrl}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     style={{ fontSize: '12px' }}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 
 const ViewMembers = () => {
@@ -12,12 +12,12 @@ const ViewMembers = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get('http://localhost:2910/teacherapi/viewmembersbygroup', {
-          params: { groupId }
+        const response = await axiosClient.get('/teacher/viewmembersbygroup', {
+          params: { groupId },
         })
-        setStudents(response.data)
+        setStudents(Array.isArray(response.data) ? response.data : [])
       } catch (err) {
-        setError('Error fetching members')
+        setStudents([])
       } finally {
         setLoading(false)
       }

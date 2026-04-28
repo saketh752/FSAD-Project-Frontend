@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Admin.css'
 
 const ViewSubjects = () => {
@@ -10,8 +10,9 @@ const ViewSubjects = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/teacher/viewsubjects?department=CSE`
+        const response = await axiosClient.get(
+          '/teacher/viewsubjects',
+          { params: { department: 'CSE' } }
         )
 
         console.log("Admin Subjects:", response.data)

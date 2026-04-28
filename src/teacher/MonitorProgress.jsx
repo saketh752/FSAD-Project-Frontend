@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 
 const summaryCardStyle = {
@@ -46,7 +46,7 @@ const MonitorProgress = () => {
   const fetchGroups = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`http://localhost:8080/api/teacher/groups?projectId=${projectId}`)
+      const response = await axiosClient.get('/teacher/groups', { params: { projectId } })
       setGroups(Array.isArray(response.data) ? response.data : [])
       setError('')
     } catch (err) {
@@ -69,9 +69,9 @@ const MonitorProgress = () => {
   const fetchGroupDetails = async (groupId) => {
     try {
       const [tasksRes, milestonesRes, submissionsRes] = await Promise.all([
-        axios.get(`http://localhost:8080/api/teacher/viewtasks?groupId=${groupId}`),
-        axios.get(`http://localhost:8080/api/teacher/viewmilestones?groupId=${groupId}`),
-        axios.get(`http://localhost:8080/api/teacher/viewsubmissions?groupId=${groupId}`)
+        axiosClient.get('/teacher/viewtasks', { params: { groupId } }),
+        axiosClient.get('/teacher/viewmilestones', { params: { groupId } }),
+        axiosClient.get('/teacher/viewsubmissions', { params: { groupId } })
       ])
       setTasks(Array.isArray(tasksRes.data) ? tasksRes.data : [])
       setMilestones(Array.isArray(milestonesRes.data) ? milestonesRes.data : [])
@@ -109,8 +109,8 @@ const MonitorProgress = () => {
     }
 
     try {
-      await axios.post(
-        `http://localhost:8080/api/teacher/addtask?groupId=${selectedGroup}`,
+      await axiosClient.post(
+        `/teacher/addtask?groupId=${selectedGroup}`,
         taskForm
       )
       setTaskForm({
@@ -143,8 +143,8 @@ const MonitorProgress = () => {
     }
 
     try {
-      await axios.post(
-        `http://localhost:8080/api/teacher/addmilestone?groupId=${selectedGroup}`,
+      await axiosClient.post(
+        `/teacher/addmilestone?groupId=${selectedGroup}`,
         milestoneForm
       )
       setMilestoneForm({

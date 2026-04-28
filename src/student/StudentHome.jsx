@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Student.css'
 import { useAuth } from '../context/AuthContext'
 
@@ -39,15 +39,13 @@ const StudentHome = () => {
       }
 
       try {
-        const subjectsRes = await axios.get(
-          `http://localhost:8080/api/student/subjects?department=${currentUser.department}`
-        )
+        const response = await axiosClient.get('/student/subjects', { params: { department: currentUser.department } })
 
-        const subjects = Array.isArray(subjectsRes.data) ? subjectsRes.data : []
+        const subjects = Array.isArray(response.data) ? response.data : []
 
         const projectResponses = await Promise.all(
           subjects.map((subject) =>
-            axios.get(`http://localhost:8080/api/teacher/projects?coursecode=${subject.coursecode}`)
+            axiosClient.get('/teacher/projects', { params: { coursecode: subject.coursecode } })
           )
         )
 

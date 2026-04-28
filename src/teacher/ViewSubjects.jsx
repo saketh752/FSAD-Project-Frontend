@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 import { useAuth } from '../context/AuthContext'
 
@@ -21,9 +21,7 @@ const ViewSubjects = () => {
       }
 
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/teacher/viewsubjects?department=${teacher.department}`
-        )
+        const response = await axiosClient.get('/teacher/viewsubjects', { params: { department: teacher.department } })
 
         console.log("API Response:", response.data)
 

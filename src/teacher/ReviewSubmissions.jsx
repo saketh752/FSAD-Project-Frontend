@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 
-const API_BASE_URL = 'http://localhost:8080'
 const reviewSummaryCardStyle = {
   padding: '18px',
   borderRadius: '18px',
@@ -25,15 +24,15 @@ const ReviewSubmissions = () => {
   const fetchSubmissions = async () => {
     setLoading(true)
     try {
-      const groupsResponse = await axios.get(
-        `http://localhost:8080/api/teacher/groups?projectId=${projectId}`
+      const groupsResponse = await axiosClient.get(
+        '/teacher/groups', { params: { projectId } }
       )
 
       const groups = Array.isArray(groupsResponse.data) ? groupsResponse.data : []
 
       const submissionResponses = await Promise.all(
         groups.map((group) =>
-          axios.get(`http://localhost:8080/api/teacher/viewsubmissions?groupId=${group.id}`)
+          axiosClient.get('/teacher/viewsubmissions', { params: { groupId: group.id } })
         )
       )
 
@@ -82,7 +81,7 @@ const ReviewSubmissions = () => {
     }
 
     try {
-      await axios.post(`http://localhost:8080/api/teacher/reviewsubmission`, {
+      await axiosClient.post('/teacher/reviewsubmission', {
         submissionId: selectedSubmission.id,
         feedback,
         grade: parsedGrade

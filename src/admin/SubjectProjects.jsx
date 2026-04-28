@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 
 const SubjectProjects = () => {
   const { coursecode } = useParams()
@@ -11,9 +11,7 @@ const SubjectProjects = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:8080/api/teacher/projects?coursecode=${coursecode}`
-        )
+        const response = await axiosClient.get('/teacher/projects', { params: { coursecode } })
 
         console.log("Admin Projects:", response.data)
 

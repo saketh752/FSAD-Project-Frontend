@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import { useAuth } from '../context/AuthContext'
 import './Student.css'
 
@@ -27,12 +27,10 @@ const ViewSubjects = () => {
       }
 
       try {
-        const res = await axios.get(
-          `http://localhost:8080/api/student/subjects?department=${student.department}`
-        )
+        const response = await axiosClient.get('/student/subjects', { params: { department: student.department } })
 
-        console.log("API Response:", res.data)
-        setSubjects(Array.isArray(res.data) ? res.data : [])
+        console.log("API Response:", response.data)
+        setSubjects(Array.isArray(response.data) ? response.data : [])
         setError('')
 
       } catch (err) {

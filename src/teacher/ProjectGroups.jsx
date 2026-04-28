@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 
 const ProjectGroups = () => {
@@ -19,8 +19,9 @@ const ProjectGroups = () => {
   const fetchGroups = async () => {
     setLoading(true)
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/teacher/groups?projectId=${projectId}`
+      const res = await axiosClient.get(
+        '/teacher/groups',
+        { params: { projectId } }
       )
       setGroups(Array.isArray(res.data) ? res.data : [])
       setError('')
@@ -45,9 +46,10 @@ const ProjectGroups = () => {
     }
     try {
       setError('')
-      await axios.post(
-        `http://localhost:8080/api/teacher/addgroup?projectId=${projectId}`,
-        { groupName: formData.groupName, maxMembers: parseInt(formData.maxMembers, 10) }
+      await axiosClient.post(
+        '/teacher/addgroup',
+        { groupName: formData.groupName, maxMembers: parseInt(formData.maxMembers, 10) },
+        { params: { projectId } }
       )
       setMessage('Group created successfully!')
       setFormData({ groupName: '', maxMembers: '5' })
@@ -67,7 +69,7 @@ const ProjectGroups = () => {
     if (window.confirm('Are you sure you want to delete this group?')) {
       try {
         setError('')
-        await axios.delete(`http://localhost:8080/api/teacher/deletegroup?groupId=${groupId}`)
+        await axiosClient.delete('/teacher/deletegroup', { params: { groupId } })
         setMessage('Group deleted successfully!')
         fetchGroups()
         setTimeout(() => setMessage(''), 3000)

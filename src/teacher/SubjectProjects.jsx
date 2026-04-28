@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Teacher.css'
 
 const SubjectProjects = () => {
@@ -19,10 +19,8 @@ const SubjectProjects = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:8080/api/teacher/projects?coursecode=${coursecode}`
-      )
-      setProjects(Array.isArray(res.data) ? res.data : [])
+      const response = await axiosClient.get('/teacher/projects', { params: { coursecode } })
+      setProjects(Array.isArray(response.data) ? response.data : [])
       setError('')
     } catch (err) {
       console.error(err)
@@ -42,10 +40,7 @@ const SubjectProjects = () => {
       return
     }
     try {
-      await axios.post(
-        `http://localhost:8080/api/teacher/addproject?coursecode=${coursecode}`,
-        formData
-      )
+      await axiosClient.post('/teacher/addproject', formData, { params: { coursecode } })
       setMessage('Project added successfully!')
       setFormData({ title: '', description: '', deadline: '' })
       setFormVisible(false)
@@ -59,7 +54,7 @@ const SubjectProjects = () => {
   const handleDelete = async (projectId) => {
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`http://localhost:8080/api/teacher/deleteproject?projectId=${projectId}`)
+        await axiosClient.delete('/teacher/deleteproject', { params: { projectId } })
         setMessage('Project deleted successfully!')
         fetchProjects()
         setTimeout(() => setMessage(''), 3000)

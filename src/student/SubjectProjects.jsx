@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosClient from '../api/axiosClient'
 import './Student.css'
 
 const SubjectProjects = () => {
@@ -13,10 +13,10 @@ const SubjectProjects = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:8080/api/teacher/projects?coursecode=${coursecode}`
-        )
-        setProjects(Array.isArray(res.data) ? res.data : [])
+        const response = await axiosClient.get('/teacher/projects', {
+          params: { coursecode },
+        })
+        setProjects(Array.isArray(response.data) ? response.data : [])
         setError('')
       } catch (err) {
         console.error(err)
@@ -48,7 +48,9 @@ const SubjectProjects = () => {
         ) : projects.length === 0 ? (
           <div className="student-empty-state">
             <div className="student-empty-icon">📋</div>
-            <p className="student-empty-text">No projects available for this subject yet</p>
+            <p className="student-empty-text">
+              No projects available for this subject yet
+            </p>
           </div>
         ) : (
           <div className="student-project-grid">
